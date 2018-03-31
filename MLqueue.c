@@ -3,10 +3,28 @@
 #define MAX 50
 #define INF 32767
 int time;
+
 typedef struct process
 {
-	int pid,AT,BT,CT,TAT,WT,RT,type;
+	int pid,AT,BT;
+	int CT,TAT,WT;
+	int RT,type;
 }process;
+/*	
+		--- Terminology ---
+	pid - process Id (calculated in program by order of Entry)
+	AT - Arrival Time of process(i/p)
+	BT - Burst Time(time to required to complete execution) of process(i/p)
+	CT - Complition Time
+	TAT - Turn Around Time, calculated as TAT = CT - AT
+	WT - waiting Time, calculated as WT = TAT - BT
+	RT - Remaining Time to complete execution
+	type - Typ of process
+		1.System Process(SRTN Scheduling)
+		2.Interactive Process(RR Scheduling)
+		3.Batch Process(FCFS Scheduling)
+*/
+
 typedef struct queue{
 	int q[MAX];
 	int f,r;
@@ -18,22 +36,14 @@ void display(process p[],int n)
 	printf("Pid AT BT CT TAT WT type\n");
 	for(i=0;i<n;i++)
 	{
-		printf("%3d %2d %2d %2d %3d %2d %d\n",p[i].pid,p[i].AT,p[i].BT,p[i].CT,p[i].TAT,p[i].WT,p[i].type);
+		printf("%3d %2d %2d ",p[i].pid,p[i].AT,p[i].BT);
+		printf("%2d %3d %2d ",p[i].CT,p[i].TAT,p[i].WT);
+		printf("%d\n",p[i].type);
 	}
 	printf("\n");
 }
-/*
-void displayq(queue *t)
-{
-	int i;
-	printf("Pid AT BT CT TAT WT type\n");
-	for(i=t->f;i<=t->r;i++)
-	{
-		printf("%3d %2d %2d %2d %3d %2d %d\n",t->q[i].pid,t->q[i].AT,t->q[i].BT,t->q[i].CT,t->q[i].TAT,t->q[i].WT,t->q[i].type);
-		printf("RT = %d\n",t->q[i].RT);
-	}
-	printf("\n");
-}*/
+
+//Queue for Round Robin
 void insert(queue *t,int ele)
 {
 	t->r++;
@@ -52,21 +62,10 @@ int delete1(queue *t){
 	t->r--;
 	return z;
 }
-/*
-process pr_delete(queue *t)
-{
-	int i,min=t->q[t->f].RT,pos=t->f;
-	for(i=t->f+1;i<=t->r;i++)
-		if(t->q[i].RT<min)
-		{
-			min = t->q[i].RT;
-			pos = i;
-		}
-	for(i=pos;i<t->r;i++)
-		t->q[i]=t->q[i+1];
-	t->r--;
-	return t->q[pos];
-}*/
+
+//Sorts processes in desceding oredr of priority based on type
+//type 1-System process --> type 2-Interactive process --> type 3-Batch process
+//                     ----- Priory decreasing ----->
 void sort(process p[],int n)
 {
 	int i,j;
@@ -82,19 +81,26 @@ void sort(process p[],int n)
 		p[j+1] = val;
 	}
 }
-void sortAT(process p[],int n)
+void sortAT(int fcfsQueue[],process p[],int n)
 {
 	int i,j;
-	process val;
+	int val,valAT,jAT;
 	for(i=0;i<n-1;i++)
 	{
-		val = p[i+1];
+		val = fcfsQueue[i+1];
 		for(j=i;j>=0;j--)
-			if(val.AT<p[j].AT)
-				p[j+1] = p[j];
+		{
+			for(int k=0;k<n;k++)
+				if(p[k].pid == val)
+					valAT = p[k].AT;
+			for(int k=0;k<n;k++)
+				if(p[k].pid == fcfsQueue[j])
+					jAT = p[k].AT;
+			if(valAT<jAT)
+				fcfsQueue[j+1] = fcfsQueue[j];
 			else 
 				break;
-		p[j+1] = val;
+		fcfsQueue[j+1] = val;
 	}
 }
 int minRT(process p[],int n,int time)
@@ -113,7 +119,8 @@ int minRT(process p[],int n,int time)
 			break;
 	}
 	return pos;
-}	
+}
+
 void srtn(process p[],int n,int time)
 {
 	int i = minRT(p,n,time);
@@ -127,15 +134,22 @@ void srtn(process p[],int n,int time)
 }
 int fcfs(process p[],int n,int time)
 {
-	int i;
-	sortAT(p,n);
+	int i,no;
+	int fcfsQueue[MAX];
+	for(i=0;i<n;i++)
+		fcfsQueue[i] = p[i].pid;
+	sortAT(fcfsQueue,p,n);
 	for(i=0;i<n;i++)
 	{
-		if(p[i].type == 3&&p[i].RT != 0)
+		for(int no=0;no<n;no++)
+			if(p[k].pid == fcfsQueue[i])
+				break;
+		if(p[no].type == 3 && p[no].RT != 0)
 			break;
 	}
 	if(i==n)
 		return 0;
+	
 	p[i].RT--;
 	if(p[i].RT == 0)
 	{
@@ -169,6 +183,7 @@ void rr(process p[],queue *t,int tq,int n,int time)
 		delete1(t);
 	}
 }
+	
 float avgTAT(process p[],int n)
 {
 	int i;
@@ -187,6 +202,7 @@ float avgWT(process p[],int n)
 	avg = avg / n;
 	return avg;
 }
+	
 void mlqueue(process p[],int n,int tq)
 {
 	int t,i,j,T=0,hp;  //T --> total time, hp --> highest priority
@@ -219,6 +235,7 @@ void mlqueue(process p[],int n,int tq)
 		}
 	}
 }
+	
 void main()
 {
 	int i,n,q;
