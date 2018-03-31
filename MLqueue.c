@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include<strings.h>
 #define MAX 50
 #define INF 32767
 int time;
@@ -191,6 +192,30 @@ void mlqueue(process p[],int n,int tq)
 		}
 	}
 }
+void saveOutput(process p[],int n,float avg_tat,float avg_wt)
+{
+	FILE *fp;
+	char fileName[34];
+	printf("Enter file name: ");
+	fflush(stdin);
+	scanf("%s",&fileName);
+	strcat(fileName, ".txt");
+	fp = fopen(fileName,"w");
+	if(fp == NULL)
+	{
+		printf("cannot open file\n");
+		exit(4);
+	}	
+	fprintf(fp,"%d\n",n);
+	for(int i=0;i<n;i++)
+	{	
+		fprintf(fp,"%3d %2d %2d ",p[i].pid,p[i].AT,p[i].BT); 
+		fprintf(fp,"%2d %3d %2d ",p[i].CT,p[i].TAT,p[i].WT);
+		fprintf(fp,"%d\n",p[i].type);
+	}
+	fprintf(fp,"%f %f\n",avg_tat,avg_wt);
+	fclose(fp);
+}
 void main()
 {
 	int i,n,q;
@@ -215,4 +240,5 @@ void main()
 	printf("average TAT = %.2f ms\n",avg_tat);
 	avg_wt = avgWT(p,n);
 	printf("average WT= %.2f ms\n",avg_wt);
+	saveOutput(p,n,avg_tat,avg_wt);
 }
