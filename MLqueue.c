@@ -8,7 +8,7 @@ typedef struct process
 	int pid,AT,BT,CT,TAT,WT,RT,type;
 }process;
 typedef struct queue{
-	process q[MAX];
+	int q[MAX];
 	int f,r;
 }queue;
 
@@ -22,6 +22,7 @@ void display(process p[],int n)
 	}
 	printf("\n");
 }
+/*
 void displayq(queue *t)
 {
 	int i;
@@ -32,15 +33,18 @@ void displayq(queue *t)
 		printf("RT = %d\n",t->q[i].RT);
 	}
 	printf("\n");
-}
-void insert(queue *t,process ele)
+}*/
+void insert(queue *t,int ele)
 {
 	t->r++;
 	t->q[t->r] = ele;
 }
-process delete1(queue *t){
+int queueFront(queue *t){
+	return t->q[t->f];
+}
+int delete1(queue *t){
 	int i=t->f;
-	process z=t->q[t->f];
+	int z=t->q[t->f];
 	while(i < t->r){
 		t->q[i] = t->q[i+1];
 		i++;
@@ -48,6 +52,7 @@ process delete1(queue *t){
 	t->r--;
 	return z;
 }
+/*
 process pr_delete(queue *t)
 {
 	int i,min=t->q[t->f].RT,pos=t->f;
@@ -61,7 +66,7 @@ process pr_delete(queue *t)
 		t->q[i]=t->q[i+1];
 	t->r--;
 	return t->q[pos];
-}
+}*/
 void sort(process p[],int n)
 {
 	int i,j;
@@ -138,28 +143,32 @@ int fcfs(process p[],int n,int time)
 		p[i].TAT = p[i].CT - p[i].AT;
 		p[i].WT  = p[i].TAT - p[i].BT;
 	}
-	return 1;
 }
-/*
-void rr(process p[],int tq,int n,int limit)
+void rr(process p[],queue *t,int tq,int n,int time)
 {
-	int 
-	for(int i=0;i<n;i++)
-	{
-		if(p[i].type == 3&&p[i].RT != 0)
+	int i,runTime,cp;//cp -> currnet process
+	cp = queueFront(t);
+	for(i=0;i<n;i++)
+		if(p[i].pid == cp)
 			break;
-	}
-	if(i==n)
-		return 0;
 	p[i].RT--;
+	runTime = p[i].BT-p[i].RT;
+	printf("p(%d):runTime=%d\n",i,runTime);
+	if(runTime%tq == 0 && p[i].RT != 0)
+	{
+		printf("hakuna\n");
+		delete1(t);
+		insert(t,cp);
+	}
 	if(p[i].RT == 0)
 	{
+		printf("matata\n");
 		p[i].CT  = time+1;
 		p[i].TAT = p[i].CT - p[i].AT;
 		p[i].WT  = p[i].TAT - p[i].BT;
+		delete1(t);
 	}
-	return 1;
-}*/
+}
 float avgTAT(process p[],int n)
 {
 	int i;
@@ -181,11 +190,17 @@ float avgWT(process p[],int n)
 void mlqueue(process p[],int n,int tq)
 {
 	int t,i,j,T=0,hp;  //T --> total time, hp --> highest priority
+	queue x;
+	x.f = 0;
+	x.r = -1;
 	for(i=0;i<n;i++)
 		T += p[i].BT;
 	sort(p,n);
 	for(t=0;t<T;t++)
 	{
+		for(i=0;i<n;i++)
+			if(p[i].type == 2&&p[i].AT==t+1)
+				insert(&x,p[i].pid);
     	for(i=0;i<n;i++)
             if(p[i].AT <= t&&p[i].RT != 0)
                 break;
@@ -195,7 +210,8 @@ void mlqueue(process p[],int n,int tq)
 		{
 			case 1 :srtn(p,n,t);
 					break;
-			case 2 :
+			case 2 :rr(p,&x,tq,n,t);
+					break;
 			case 3 :fcfs(p,n,t);
 					break;
 			default:printf("Invalid Type!\n");
