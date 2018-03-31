@@ -127,16 +127,13 @@ void rr(process p[],queue *t,int tq,int n,int time)
 			break;
 	p[i].RT--;
 	runTime = p[i].BT-p[i].RT;
-	printf("p(%d):runTime=%d\n",i,runTime);
 	if(runTime%tq == 0 && p[i].RT != 0)
 	{
-		printf("hakuna\n");
 		delete1(t);
 		insert(t,cp);
 	}
 	if(p[i].RT == 0)
 	{
-		printf("matata\n");
 		p[i].CT  = time+1;
 		p[i].TAT = p[i].CT - p[i].AT;
 		p[i].WT  = p[i].TAT - p[i].BT;
