@@ -36,11 +36,11 @@ void display(process p[],int n)
 	}
 	printf("\n");
 }
-void readOutput(process p[],int *n,float *avg_tat,float *avg_wt)
+void readOutput(process p[],int *n,float *avg_tat,float *avg_wt,int chart[])
 {
 	FILE *fp;
 	char fileName[34],opFiles[30][34];
-	int len,k=0,choice;
+	int len,k=0,choice,T=0;
 	DIR *d;
 	struct dirent *pd;
 	
@@ -75,17 +75,26 @@ void readOutput(process p[],int *n,float *avg_tat,float *avg_wt)
 		fscanf(fp,"%d%d%d ",&p[i].CT,&p[i].TAT,&p[i].WT);
 		fscanf(fp,"%d",&p[i].type);
 	}
+	for(int i=0;i<*n;i++)
+		T += p[i].BT;
+	for(int i=0;i<T;i++)
+		fscanf(fp,"%d",&chart[i]);
 	fscanf(fp,"%f%f",avg_tat,avg_wt);
 	fclose(fp);
 }
 void main()
 {
-	int n;
+	int n,chart[MAX],T=0;
 	float avg_tat,avg_wt;
 	process p[MAX];
-	readOutput(p,&n,&avg_tat,&avg_wt);
+	readOutput(p,&n,&avg_tat,&avg_wt,chart);
 	
 	//just for checking:-
+	for(int i=0;i<n;i++)
+		T += p[i].BT;
+	for(int i=0;i<T;i++)
+		printf("%d ",chart[i]);
+	printf("\n");
 	display(p,n);
 	printf("average TAT = %.2f ms\n",avg_tat);
 	printf("average WT= %.2f ms\n",avg_wt);

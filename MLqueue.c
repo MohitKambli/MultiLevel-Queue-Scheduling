@@ -90,7 +90,7 @@ int minRT(process p[],int n,int time)
 	}
 	return pos;
 }	
-void srtn(process p[],int n,int time)
+int srtn(process p[],int n,int time)
 {
 	int i = minRT(p,n,time);
 	p[i].RT--;
@@ -100,6 +100,7 @@ void srtn(process p[],int n,int time)
 		p[i].TAT = p[i].CT - p[i].AT;
 		p[i].WT  = p[i].TAT - p[i].BT;
 	}
+	return p[i].pid;
 }
 int fcfs(process p[],int n,int time)
 {
@@ -109,8 +110,6 @@ int fcfs(process p[],int n,int time)
 		if(p[i].type == 3&&p[i].RT != 0)
 			break;
 	}
-	if(i==n)
-		return 0;
 	p[i].RT--;
 	if(p[i].RT == 0)
 	{
@@ -118,8 +117,9 @@ int fcfs(process p[],int n,int time)
 		p[i].TAT = p[i].CT - p[i].AT;
 		p[i].WT  = p[i].TAT - p[i].BT;
 	}
+	return p[i].pid;
 }
-void rr(process p[],queue *t,int tq,int n,int time)
+int rr(process p[],queue *t,int tq,int n,int time)
 {
 	int i,runTime,cp;//cp -> currnet process
 	cp = queueFront(t);
@@ -140,6 +140,7 @@ void rr(process p[],queue *t,int tq,int n,int time)
 		p[i].WT  = p[i].TAT - p[i].BT;
 		delete1(t);
 	}
+	return p[i].pid;
 }
 float avgTAT(process p[],int n)
 {
@@ -159,9 +160,10 @@ float avgWT(process p[],int n)
 	avg = avg / n;
 	return avg;
 }
-void mlqueue(process p[],int n,int tq)
+void mlqueue(process p[],int n,int tq,int chart[])
 {
 	int t,i,j,T=0,hp;  //T --> total time, hp --> highest priority
+	int cur_pid;
 	queue x;
 	x.f = 0;
 	x.r = -1;
@@ -181,21 +183,26 @@ void mlqueue(process p[],int n,int tq)
 			break;
 		switch(p[i].type)
 		{
-			case 1 :srtn(p,n,t);
+			case 1 :cur_pid = srtn(p,n,t);
 					break;
-			case 2 :rr(p,&x,tq,n,t);
+			case 2 :cur_pid = rr(p,&x,tq,n,t);
 					break;
-			case 3 :fcfs(p,n,t);
+			case 3 :cur_pid = fcfs(p,n,t);
 					break;
 			default:printf("Invalid Type!\n");
 					exit(1);
 		}
+		chart[t] = cur_pid;
 	}
 }
-void saveOutput(process p[],int n,float avg_tat,float avg_wt)
+void saveOutput(process p[],int n,float avg_tat,float avg_wt,int chart[])
 {
 	FILE *fp;
 	char fileName[34];
+	int T=0;
+	for(int i=0;i<n;i++)
+		T += p[i].BT;
+	
 	printf("Enter file name: ");
 	fflush(stdin);
 	scanf("%s",&fileName);
@@ -205,7 +212,7 @@ void saveOutput(process p[],int n,float avg_tat,float avg_wt)
 	{
 		printf("cannot open file\n");
 		exit(4);
-	}	
+	}
 	fprintf(fp,"%d\n",n);
 	for(int i=0;i<n;i++)
 	{	
@@ -213,12 +220,14 @@ void saveOutput(process p[],int n,float avg_tat,float avg_wt)
 		fprintf(fp,"%2d %3d %2d ",p[i].CT,p[i].TAT,p[i].WT);
 		fprintf(fp,"%d\n",p[i].type);
 	}
-	fprintf(fp,"%f %f\n",avg_tat,avg_wt);
+	for(int i=0;i<T;i++)
+		fprintf(fp,"%d ",chart[i]);
+	fprintf(fp,"\n%f %f\n",avg_tat,avg_wt);
 	fclose(fp);
 }
 void main()
 {
-	int i,n,q;
+	int i,n,q,chart[MAX];
 	process p[MAX];
 	float avg_tat,avg_wt;
 	printf("Enter no. of processes: ");
@@ -234,11 +243,11 @@ void main()
 	}
 	printf("Enter time quantum: ");
 	scanf("%d",&q);
-	mlqueue(p,n,q);
+	mlqueue(p,n,q,chart);
 	display(p,n);
 	avg_tat = avgTAT(p,n);
 	printf("average TAT = %.2f ms\n",avg_tat);
 	avg_wt = avgWT(p,n);
 	printf("average WT= %.2f ms\n",avg_wt);
-	saveOutput(p,n,avg_tat,avg_wt);
+	saveOutput(p,n,avg_tat,avg_wt,chart);
 }
